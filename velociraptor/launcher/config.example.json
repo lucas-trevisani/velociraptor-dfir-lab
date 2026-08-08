@@ -1,0 +1,8 @@
+{
+  "api_base": "https://YOUR_VPS_IP:18443",
+  "license_key": "VL-change-me",
+  "launcher_version": "1.0.0",
+  "velociraptor_binary": "velociraptor",
+  "work_dir": ".launcher_work"
+}
+

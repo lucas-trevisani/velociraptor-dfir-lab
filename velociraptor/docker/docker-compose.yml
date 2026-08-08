@@ -1,0 +1,46 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: velo-license-postgres
+    restart: unless-stopped
+    env_file: ../.env
+    volumes:
+      - velo_license_pgdata:/var/lib/postgresql/data
+    ports:
+      - "127.0.0.1:25432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  api:
+    build:
+      context: ..
+      dockerfile: docker/api.Dockerfile
+    container_name: velo-license-api
+    restart: unless-stopped
+    env_file: ../.env
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - ../storage:/app/storage
+      - ../secrets:/app/secrets:ro
+    ports:
+      - "18443:18443"
+    command: ["uvicorn", "api.app.main:app", "--host", "0.0.0.0", "--port", "18443", "--proxy-headers", "--ssl-keyfile", "/app/secrets/api_tls.key", "--ssl-certfile", "/app/secrets/api_tls.crt"]
+
+  panel:
+    build:
+      context: ..
+      dockerfile: docker/panel.Dockerfile
+    container_name: velo-license-panel
+    restart: unless-stopped
+    environment:
+      VITE_API_BASE: ""
+    ports:
+      - "18080:18080"
+
+volumes:
+  velo_license_pgdata:
